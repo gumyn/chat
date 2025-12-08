@@ -1,0 +1,13 @@
+{
+  "name": "gun-chat-relay",
+  "version": "1.0.0",
+  "description": "Simple Gun.js relay server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "gun": "^0.2020.1239",
+    "mime": "^3.0.0"
+  }
+}
