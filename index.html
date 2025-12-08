@@ -536,16 +536,18 @@
 
     <!-- Auth Section -->
     <div id="auth-container" class="fade-in">
-        <h1>GunChat <i class="fa-solid fa-bolt" style="color: var(--accent-color);"></i></h1>
+        <h1>GunChat <span class="version">v1.2</span> <i class="fa-solid fa-bolt"
+                style="color: var(--accent-color);"></i></h1>
         <p class="subtitle">Décentralisé, Sécurisé, Temps Réel</p>
 
         <div class="input-group">
             <i class="fa-solid fa-user"></i>
-            <input type="text" id="username" placeholder="Nom d'utilisateur" autocomplete="off">
+            <input type="text" id="username" placeholder="Nom d'utilisateur" autocomplete="off"
+                onkeypress="handleAuthEnter(event)">
         </div>
         <div class="input-group">
             <i class="fa-solid fa-lock"></i>
-            <input type="password" id="password" placeholder="Mot de passe">
+            <input type="password" id="password" placeholder="Mot de passe" onkeypress="handleAuthEnter(event)">
         </div>
 
         <button class="btn btn-primary" onclick="login()">Se Connecter</button>
@@ -886,6 +888,10 @@
 
         function handleEnter(e) {
             if (e.key === 'Enter') sendMessage();
+        }
+
+        function handleAuthEnter(e) {
+            if (e.key === 'Enter') login();
         }
 
         function escapeHtml(text) {
