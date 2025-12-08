@@ -447,9 +447,17 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                /* Prevent centering issues on mobile */
+            }
+
             #app-container {
                 flex-direction: column;
-                height: 100vh;
+                height: 100dvh;
+                /* Use dynamic viewport height */
+                height: -webkit-fill-available;
+                /* iOS fix */
                 width: 100vw;
                 border-radius: 0;
                 border: none;
@@ -460,14 +468,13 @@
                 height: 100%;
                 border-right: none;
                 display: flex;
-                /* Default visible */
+                flex-direction: column;
             }
 
             #chat-area {
                 width: 100%;
                 height: 100%;
                 display: none;
-                /* Default hidden */
             }
 
             /* When chat is active */
@@ -481,9 +488,11 @@
 
             .back-btn {
                 display: block !important;
-                margin-right: 10px;
+                margin-right: 15px;
                 cursor: pointer;
                 font-size: 1.2rem;
+                padding: 10px;
+                /* Larger touch target */
             }
 
             .sidebar-header {
