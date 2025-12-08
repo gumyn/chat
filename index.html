@@ -446,6 +446,7 @@
         }
 
         /* Responsive Mobile Fixes */
+        /* Responsive Mobile Fixes */
         @media (max-width: 768px) {
             body {
                 overflow: hidden;
@@ -532,19 +533,36 @@
             .back-btn {
                 display: block !important;
                 margin-right: 15px;
-                margin-right: 0;
-                margin-bottom: 2px;
-                width: 30px;
-                height: 30px;
+                font-size: 1.4rem;
+                padding: 5px;
+            }
+
+            /* Ensure user items look like desktop */
+            .users-list {
+                display: block;
+                /* Reset flex if it was set differently */
+                padding: 1rem;
+            }
+
+            .user-item {
+                flex-direction: row;
+                /* Force row */
+                justify-content: flex-start;
+                margin-bottom: 5px;
+                width: 100%;
             }
 
             .user-info {
-                display: none;
+                display: flex !important;
+                /* Force show */
+                flex-direction: column;
             }
 
-            .user-item.active {
-                background: var(--accent-color);
-                color: #000;
+            .user-item .avatar {
+                margin-right: 10px;
+                margin-bottom: 0;
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
@@ -554,7 +572,7 @@
 
     <!-- Auth Section -->
     <div id="auth-container" class="fade-in">
-        <h1>GunChat <span class="version">v1.2</span> <i class="fa-solid fa-bolt"
+        <h1>GunChat <span class="version">v1.3</span> <i class="fa-solid fa-bolt"
                 style="color: var(--accent-color);"></i></h1>
         <p class="subtitle">Décentralisé, Sécurisé, Temps Réel</p>
 
