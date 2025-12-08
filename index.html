@@ -457,11 +457,33 @@
 
             #sidebar {
                 width: 100%;
-                height: 60px;
-                flex-direction: row;
-                overflow-x: auto;
+                height: 100%;
                 border-right: none;
-                border-bottom: 1px solid var(--glass-border);
+                display: flex;
+                /* Default visible */
+            }
+
+            #chat-area {
+                width: 100%;
+                height: 100%;
+                display: none;
+                /* Default hidden */
+            }
+
+            /* When chat is active */
+            #app-container.show-chat #sidebar {
+                display: none;
+            }
+
+            #app-container.show-chat #chat-area {
+                display: flex;
+            }
+
+            .back-btn {
+                display: block !important;
+                margin-right: 10px;
+                cursor: pointer;
+                font-size: 1.2rem;
             }
 
             .sidebar-header {
@@ -555,9 +577,12 @@
         <!-- Chat Area -->
         <div id="chat-area">
             <div class="chat-header">
-                <div class="chat-title">
-                    <h2 id="current-chat-name">Salon Global</h2>
-                    <span id="current-chat-status">Chat public</span>
+                <div style="display: flex; align-items: center;">
+                    <i class="fa-solid fa-arrow-left back-btn" onclick="showSidebar()"></i>
+                    <div class="chat-title">
+                        <h2 id="current-chat-name">Salon Global</h2>
+                        <span id="current-chat-status">Chat public</span>
+                    </div>
                 </div>
                 <div class="chat-actions">
                     <i class="fa-solid fa-video" style="margin-right: 15px; opacity: 0.5; cursor: not-allowed;"></i>
@@ -586,8 +611,15 @@
         // --- Initialization ---
         // Using multiple peers for better reliability
         const peers = [
+            // Local peer (if running node server.js)
+            location.origin + '/gun',
+            // Community peers (public, may be unstable)
+            'https://plankton-app-6qfp3.ondigitalocean.app/'
             'https://gun-manhattan.herokuapp.com/gun',
-            'https://gun-us.herokuapp.com/gun'
+            'https://gun-us.herokuapp.com/gun',
+            'https://gun-eu.herokuapp.com/gun',
+            'https://phrassed.com/gun',
+            'https://mvp-gun.herokuapp.com/gun'
         ];
         const gun = Gun({ peers: peers, localStorage: true });
         const user = gun.user();
@@ -700,6 +732,9 @@
 
         // --- Chat Logic ---
         async function switchChat(type, pub = null, alias = null) {
+            // Mobile: Show chat view
+            document.getElementById('app-container').classList.add('show-chat');
+
             // Update State
             currentChat = { type, pub, alias };
 
@@ -745,6 +780,10 @@
             } else {
                 subscribeToMessages();
             }
+        }
+
+        function showSidebar() {
+            document.getElementById('app-container').classList.remove('show-chat');
         }
 
         let messageListener = null; // To keep track and turn off if needed (Gun .off() is tricky, usually we just ignore old events in UI or clear container)
