@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gun.js Decentralized Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GunChat Decentralized</title>
 
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -445,75 +445,93 @@
             min-height: 20px;
         }
 
-        /* Responsive */
+        /* Responsive Mobile Fixes */
         @media (max-width: 768px) {
             body {
-                align-items: flex-start;
-                /* Prevent centering issues on mobile */
+                overflow: hidden;
+                /* Prevent body scroll */
             }
 
             #app-container {
-                flex-direction: column;
-                height: 100dvh;
-                /* Use dynamic viewport height */
-                height: -webkit-fill-available;
-                /* iOS fix */
-                width: 100vw;
-                border-radius: 0;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
                 border: none;
+                border-radius: 0;
+                margin: 0;
+                flex-direction: column;
+                background: #1a1a2e;
+                /* Solid background for mobile */
             }
 
+            /* Sidebar View */
             #sidebar {
                 width: 100%;
                 height: 100%;
-                border-right: none;
                 display: flex;
+                flex-direction: column;
+                border-right: none;
+                z-index: 1;
+            }
+
+            /* Chat View */
+            #chat-area {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #1a1a2e;
+                z-index: 10;
+                display: none;
+                /* Hidden by default */
                 flex-direction: column;
             }
 
-            #chat-area {
-                width: 100%;
-                height: 100%;
-                display: none;
+            /* Toggle Logic */
+            #app-container.show-chat #chat-area {
+                display: flex;
             }
 
-            /* When chat is active */
             #app-container.show-chat #sidebar {
                 display: none;
             }
 
-            #app-container.show-chat #chat-area {
-                display: flex;
+            /* Header Adjustments */
+            .sidebar-header,
+            .chat-header {
+                padding: 1rem;
+                height: 70px;
+                flex-shrink: 0;
+            }
+
+            /* Message Area */
+            #messages-container {
+                flex: 1;
+                padding: 1rem;
+                padding-bottom: 80px;
+                /* Space for input */
+            }
+
+            /* Input Area */
+            .chat-input-area {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                padding: 10px;
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                background: rgba(26, 26, 46, 0.95);
+                backdrop-filter: blur(10px);
+                border-top: 1px solid var(--glass-border);
+                z-index: 20;
             }
 
             .back-btn {
                 display: block !important;
                 margin-right: 15px;
-                cursor: pointer;
-                font-size: 1.2rem;
-                padding: 10px;
-                /* Larger touch target */
-            }
-
-            .sidebar-header {
-                display: none;
-            }
-
-            .users-list {
-                display: flex;
-                padding: 5px;
-            }
-
-            .user-item {
-                flex-direction: column;
-                min-width: 60px;
-                padding: 5px;
-                justify-content: center;
-                margin-bottom: 0;
-                margin-right: 5px;
-            }
-
-            .user-item .avatar {
                 margin-right: 0;
                 margin-bottom: 2px;
                 width: 30px;
