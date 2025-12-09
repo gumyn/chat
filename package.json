@@ -1,13 +1,15 @@
 {
   "name": "gun-chat-relay",
   "version": "1.0.0",
-  "description": "Simple Gun.js relay server",
+  "description": "Gun.js relay server with Stripe integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "gun": "^0.2020.1239",
-    "mime": "^3.0.0"
+    "stripe": "^14.0.0"
   }
 }
