@@ -564,6 +564,129 @@
                 height: 40px;
             }
         }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--bg-gradient);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .affiliate-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .affiliate-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .affiliate-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .affiliate-input {
+            width: 60px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            text-align: center;
+        }
+
+        .affiliate-link-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            word-break: break-all;
+            font-family: monospace;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+        }
+
+        .affiliate-link-box:hover {
+            border-color: var(--accent-color);
+        }
+
+        .copy-hint {
+            font-size: 0.7rem;
+            color: var(--accent-color);
+            margin-top: 5px;
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -603,8 +726,12 @@
                         <div class="user-status">En ligne</div>
                     </div>
                 </div>
-                <i class="fa-solid fa-right-from-bracket" style="cursor: pointer; color: var(--text-muted);"
-                    onclick="logout()" title="Déconnexion"></i>
+                <div style="display: flex; gap: 10px;">
+                    <i class="fa-solid fa-hand-holding-dollar" style="cursor: pointer; color: var(--accent-color);"
+                        onclick="openAffiliateModal()" title="Affiliation"></i>
+                    <i class="fa-solid fa-right-from-bracket" style="cursor: pointer; color: var(--text-muted);"
+                        onclick="logout()" title="Déconnexion"></i>
+                </div>
             </div>
 
             <div class="users-list" id="users-list">
@@ -652,6 +779,45 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Affiliate Modal -->
+    <div id="affiliate-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Affiliation <i class="fa-solid fa-coins" style="color: var(--success);"></i>
+                </div>
+                <i class="fa-solid fa-xmark modal-close" onclick="closeAffiliateModal()"></i>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs or Sections -->
+                <div style="margin-bottom: 20px;">
+                    <h3>Mon Lien Affilié</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Partagez ce lien pour
+                        recevoir vos commissions.</p>
+                    <div class="affiliate-link-box" onclick="copyLink(this)" id="my-affiliate-link">
+                        Chargement...
+                    </div>
+                    <div class="copy-hint">Cliquer pour copier</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem;">
+                        Votre commission actuelle : <span id="my-commission-rate"
+                            style="color: var(--success); font-weight: bold;">0%</span>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+
+                <div id="admin-section">
+                    <h3>Gestion des Vendeurs</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Définir les commissions
+                        (Admin)</p>
+                    <div id="affiliates-list">
+                        <!-- List injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- Initialization ---
@@ -660,13 +826,14 @@
             // Local peer (if running node server.js)
             location.origin + '/gun',
             // Community peers (public, may be unstable)
-            'https://plankton-app-6qfp3.ondigitalocean.app/gun',
-            'https://gun-chat-dapp.web.app/gun',
-            'https://gun-manhattan.herokuapp.com/gun',
-            'https://gun-us.herokuapp.com/gun',
-            'https://gun-eu.herokuapp.com/gun',
-            'https://phrassed.com/gun',
-            'https://mvp-gun.herokuapp.com/gun'
+            'http://0.0.0.0:8888/gun',
+            // 'https://plankton-app-6qfp3.ondigitalocean.app/gun',
+            // 'https://gun-chat-dapp.web.app/gun',
+            // 'https://gun-manhattan.herokuapp.com/gun',
+            // 'https://gun-us.herokuapp.com/gun',
+            // 'https://gun-eu.herokuapp.com/gun',
+            // 'https://phrassed.com/gun',
+            // 'https://mvp-gun.herokuapp.com/gun'
         ];
         const gun = Gun({ peers: peers, localStorage: true });
         const user = gun.user();
@@ -937,6 +1104,67 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        // --- Affiliate System ---
+        function openAffiliateModal() {
+            document.getElementById('affiliate-modal').classList.add('open');
+            loadAffiliateData();
+        }
+
+        function closeAffiliateModal() {
+            document.getElementById('affiliate-modal').classList.remove('open');
+        }
+
+        function loadAffiliateData() {
+            // 1. Generate My Link
+            // In a real app, this would point to a Stripe payment page with ?client_reference_id=MY_PUB
+            const stripeBaseUrl = "https://buy.stripe.com/test_link";
+            const myLink = `${stripeBaseUrl}?ref=${currentUser.pub}`;
+            document.getElementById('my-affiliate-link').textContent = myLink;
+
+            // 2. Load My Rate
+            gun.get('affiliate_rates').get(currentUser.pub).on((rate) => {
+                document.getElementById('my-commission-rate').textContent = (rate || 0) + '%';
+            });
+
+            // 3. Load All Users for Admin (In this demo, everyone is admin)
+            const list = document.getElementById('affiliates-list');
+            list.innerHTML = '';
+
+            usersMap.forEach((alias, pub) => {
+                const div = document.createElement('div');
+                div.className = 'affiliate-item';
+                div.innerHTML = `
+                    <div class="affiliate-user">
+                        <div class="avatar" style="width: 30px; height: 30px; font-size: 0.8rem;">${alias.substring(0, 2).toUpperCase()}</div>
+                        <div style="font-size: 0.9rem;">${alias}</div>
+                    </div>
+                    <div class="affiliate-input-group">
+                        <input type="number" class="affiliate-input" min="0" max="100" id="rate-${pub}" onchange="updateRate('${pub}', this.value)">
+                        <span>%</span>
+                    </div>
+                `;
+                list.appendChild(div);
+
+                // Load existing rate
+                gun.get('affiliate_rates').get(pub).once((rate) => {
+                    if (rate) document.getElementById(`rate-${pub}`).value = rate;
+                });
+            });
+        }
+
+        function updateRate(pub, rate) {
+            gun.get('affiliate_rates').get(pub).put(rate);
+        }
+
+        function copyLink(el) {
+            const text = el.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const original = el.style.borderColor;
+                el.style.borderColor = 'var(--success)';
+                setTimeout(() => el.style.borderColor = original, 500);
+            });
         }
 
         // Check if already logged in (Gun persists session)
