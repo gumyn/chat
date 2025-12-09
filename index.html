@@ -827,6 +827,9 @@
             location.origin + '/gun',
             // Community peers (public, may be unstable)
             'http://0.0.0.0:8888/gun',
+            'https://gun.defucc.me/gun',
+            'https://peer.wallie.io/gun',
+            'https://gun.o8.is/gun'
             // 'https://plankton-app-6qfp3.ondigitalocean.app/gun',
             // 'https://gun-chat-dapp.web.app/gun',
             // 'https://gun-manhattan.herokuapp.com/gun',
@@ -836,6 +839,15 @@
             // 'https://mvp-gun.herokuapp.com/gun'
         ];
         const gun = Gun({ peers: peers, localStorage: true });
+
+        // --- Connection Logging ---
+        gun.on('hi', peer => {
+            console.log('✅ Gun.js Peer Connected:', peer.url || peer);
+        });
+        gun.on('bye', peer => {
+            console.log('❌ Gun.js Peer Disconnected:', peer.url || peer);
+        });
+
         const user = gun.user();
         const SEA = Gun.SEA;
 
@@ -1117,21 +1129,18 @@
         }
 
         function loadAffiliateData() {
-            // 1. Generate My Link (Dynamic via Server)
-            // Instead of a static link, we give them a link to our "buy" page with their ref
-            // Or we can generate a specific checkout link on demand.
-
-            // For this demo, let's show a "Smart Link" that users can share.
-            // When someone clicks this link, your site would normally call the API.
-            const mySmartLink = `${location.origin}/buy?ref=${currentUser.pub}`;
-            document.getElementById('my-affiliate-link').textContent = mySmartLink;
+            // 1. Generate My Link
+            // In a real app, this would point to a Stripe payment page with ?client_reference_id=MY_PUB
+            const stripeBaseUrl = "https://buy.stripe.com/test_link";
+            const myLink = `${stripeBaseUrl}?ref=${currentUser.pub}`;
+            document.getElementById('my-affiliate-link').textContent = myLink;
 
             // 2. Load My Rate
             gun.get('affiliate_rates').get(currentUser.pub).on((rate) => {
                 document.getElementById('my-commission-rate').textContent = (rate || 0) + '%';
             });
 
-            // 3. Load All Users for Admin
+            // 3. Load All Users for Admin (In this demo, everyone is admin)
             const list = document.getElementById('affiliates-list');
             list.innerHTML = '';
 
@@ -1155,27 +1164,6 @@
                     if (rate) document.getElementById(`rate-${pub}`).value = rate;
                 });
             });
-        }
-
-        // Function to simulate buying (what happens when a customer clicks the smart link)
-        async function simulatePurchase(affiliatePub) {
-            try {
-                const response = await fetch('/api/create-checkout-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        affiliatePub: affiliatePub,
-                        productId: 'premium_sub'
-                    })
-                });
-                const data = await response.json();
-                console.log("Stripe Session URL:", data.url);
-                alert(`Redirection vers Stripe...\n(Simulation: ${data.url})`);
-                // window.location.href = data.url; // Real redirect
-            } catch (e) {
-                console.error(e);
-                alert("Erreur lors de la création du paiement");
-            }
         }
 
         function updateRate(pub, rate) {
