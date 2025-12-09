@@ -911,10 +911,11 @@
 
             // Announce presence
             // We write to a public 'users' node. 
-            // In a real app, we'd want to avoid a global list for scalability, but for this demo it's fine.
+            // CRITICAL: We MUST publish our 'epub' (encryption key) here so others can find it easily.
             gun.get('gun-chat-demo-users').get(pub).put({
                 alias: alias,
                 pub: pub,
+                epub: user.is.epub, // Store encryption key publicly
                 lastSeen: Date.now()
             });
 
@@ -930,7 +931,7 @@
             gun.get('gun-chat-demo-users').map().on((data, pub) => {
                 if (!data || !data.alias || pub === currentUser.pub) return;
 
-                usersMap.set(pub, data.alias);
+                usersMap.set(pub, { alias: data.alias, epub: data.epub });
                 renderUserInSidebar(pub, data.alias);
             });
         }
@@ -955,6 +956,9 @@
                 list.appendChild(el);
             }
         }
+
+        // Cache for shared secrets to avoid re-computing (slow)
+        const secretCache = {};
 
         // --- Chat Logic ---
         async function switchChat(type, pub = null, alias = null) {
@@ -983,26 +987,50 @@
 
             // Compute Secret if Private
             if (type === 'private') {
-                // We need the other user's epub (encryption public key)
-                // Standard Gun user structure puts epub at user.epub
-                // But we only have their pub (signing key) from the list.
-                // We need to fetch their epub.
-                // For this demo, we will assume the standard path: gun.user(pub).once(...)
+                // Check cache first
+                if (secretCache[pub]) {
+                    currentChat.sharedSecret = secretCache[pub];
+                    subscribeToMessages();
+                    return;
+                }
 
-                // Note: Getting another user's epub can be tricky if they haven't published it publicly in a known spot.
-                // Gun.user(pub) usually has 'epub' property.
+                // Try to get epub from our local map first (fastest)
+                let epub = usersMap.get(pub)?.epub;
 
-                gun.user(pub).once(async (data) => {
-                    if (data && data.epub) {
-                        currentChat.epub = data.epub;
-                        currentChat.sharedSecret = await SEA.secret(data.epub, user._.sea);
+                if (!epub) {
+                    // Fallback: Try to fetch from user node
+                    console.log("Fetching epub for", pub);
+                    gun.user(pub).once(async (data) => {
+                        if (data && data.epub) {
+                            epub = data.epub;
+                            finishSetup();
+                        } else {
+                            // Last resort: check the public list node again
+                            gun.get('gun-chat-demo-users').get(pub).once(async (data) => {
+                                if (data && data.epub) {
+                                    epub = data.epub;
+                                    finishSetup();
+                                } else {
+                                    console.error("Could not find epub for user", pub);
+                                    document.getElementById('messages-container').innerHTML = '<div style="text-align:center; margin-top:20px; color:var(--danger)">Impossible de chiffrer : Clé publique introuvable. L\'utilisateur doit se reconnecter.</div>';
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    finishSetup();
+                }
+
+                async function finishSetup() {
+                    if (!epub) return;
+                    try {
+                        const secret = await SEA.secret(epub, user._.sea);
+                        secretCache[pub] = secret; // Cache it!
+                        currentChat.sharedSecret = secret;
                         subscribeToMessages();
-                    } else {
-                        // Fallback or wait
-                        // If we can't find epub, we can't encrypt.
-                        console.log("Could not find epub for user");
-                    }
-                });
+                    } catch (e) { console.error("Secret generation failed", e); }
+                }
+
             } else {
                 subscribeToMessages();
             }
@@ -1074,6 +1102,17 @@
             const text = input.value.trim();
             if (!text) return;
 
+            // Optimistic UI: Show message immediately
+            const tempId = 'temp-' + Date.now();
+            renderMessage({
+                msg: text,
+                alias: currentUser.alias,
+                pub: currentUser.pub,
+                timestamp: Date.now()
+            }, tempId);
+
+            input.value = ''; // Clear input immediately
+
             const msgData = {
                 msg: text,
                 alias: currentUser.alias,
@@ -1096,8 +1135,6 @@
                     msg: encrypted
                 });
             }
-
-            input.value = '';
         }
 
         function handleEnter(e) {
